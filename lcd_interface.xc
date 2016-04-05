@@ -115,7 +115,7 @@ extends client interface spi_master_if  : {
         self.transfer8(0x86);
 
         self.sendCommand(dc, ILI9341_CMD_MEMORY_ACCESS_CONTROL);    // Memory Access Control
-        self.transfer8(0x08); //0x48
+        self.transfer8(0xC8); //0x48
 
         self.sendCommand(dc, ILI9341_CMD_COLMOD_PIXEL_FORMAT_SET);
         self.transfer8(0x55);
