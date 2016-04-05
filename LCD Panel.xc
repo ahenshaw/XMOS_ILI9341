@@ -3,7 +3,6 @@
 #include <platform.h>
 #include <print.h>
 #include <spi.h>
-#include "ILI9341.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "lcd_interface.h"
@@ -25,38 +24,29 @@ unsigned int z2 = 12345;
 unsigned int z3 = 12345;
 unsigned int z4 = 12345;
 
-out port * movable dcport_p = &dcport;
 
 DisplayContext dc;
 
-void reset_panel() {
-    reset <: 1;
-    delay_microseconds(5000);
-    reset <: 0;
-    delay_microseconds(20000);
-    reset <: 1;
-    delay_microseconds(150000);
-}
 
-
-void test(client spi_master_if lcd){
-    reset_panel();
-    lcd.init(dc, move(dcport_p));
-    lcd.setFont(dc,
-                dejavu_sans_mono_book_16_font_lookup,
-                dejavu_sans_mono_book_16_font_pixels);
+void demoLines(client spi_master_if lcd){
+    Point triangle[] = {{-2, -2}, {2, -2}, {0, 2}, {-2, -2}};
+    Point points[4];
+    Point at = {160, 120};
 
     lcd.clear(dc);
 
-    //lcd.drawText(dc, "Text Test", 110, 0);
-    //char str[8];
-    //for(int i=0; i<1000; i++) {
-    //    sprintf(str, "%d", i);
-    //    lcd.drawText(dc, str, 138, 20);
-    //}
-    lcd.drawLED(dc, 130, 30, 5);
-    //lcd.drawText(dc, "    ", 138, 20);
-    lcd.drawText(dc, "Testing", 110, 0);
+    lcd.drawText(dc, "Lines", 131, 0);
+
+    lcd.setColor(dc, 0xffff00);
+    for (int i = 0; i < 40; i++){
+        for (int j=0; j<4; j++) {
+            points[j].x = at.x + triangle[j].x*i;
+            points[j].y = at.y + triangle[j].y*i;
+        }
+        lcd.drawPolyLine(dc, points, 4);
+    }
+    lcd.drawPolyLine(dc, points, 4);
+
     lcd.setColor(dc, 0xff0000);
     for (int x=0; x<=320; x+=10){
         lcd.drawLine(dc, 0, 0, x, 239);
@@ -65,62 +55,57 @@ void test(client spi_master_if lcd){
     for (int x=319; x>=0; x-=10){
         lcd.drawLine(dc, 319, 0, x, 239);
     }
-
 }
 
-/*
-void graphics(client spi_master_if lcd){
-    int i;
-    //247, 222
 
-    reset_panel();
-    lcd.initRegisters(dcport);
+void demo(client spi_master_if lcd){
+    out port * movable dcport_ptr = &dcport;
+
+    lcd.init(dc, move(dcport_ptr), reset);
+    lcd.setFont(dc,
+                dejavu_sans_mono_book_16_font_lookup,
+                dejavu_sans_mono_book_16_font_pixels);
 
     while(1) {
-        lcd.clear(dcport, 0);
-        for(i=0; i < 20; i++){
-
-            for (int x=0; x < 200; x+=120) {
-                for (int y=0; y < 222; y += 18) {
-
-                    lcd.drawString(dcport,
-                                   "Test 1, 2, 3",
-                                   x, y,
-                                   rand() % 0xffffff, rand() % 0xffffff,
-                                   dejavu_sans_mono_book_16_font_lookup,
-                                   dejavu_sans_mono_book_16_font_pixels);
-
-                }
+        demoLines(lcd);
+        delay_microseconds(1000000);
+        lcd.clear(dc);
+        lcd.setColor(dc, 0xffff00);
+        for (int x=0; x < 200; x+=120) {
+            for (int y=0; y < 222; y += 18) {
+                lcd.drawText(dc, "Test 1, 2, 3", x, y);
             }
         }
-        lcd.clear(dcport, 0);
-        for(i=0; i<300;i++) {
-            lcd.drawFilledRect(dcport, rand()%320, rand()%240, rand()%100, rand()%100, rand()%65535);
+        delay_microseconds(1000000);
+        lcd.clear(dc);
+        for(int i=0; i<1500;i++) {
+            lcd.setColor(dc, rand() & 0xffffff);
+            lcd.drawRect(dc, rand()%320, rand()%240, rand()%100, rand()%100);
         }
-        lcd.clear(dcport, 0);
-        for(i=0; i<3000;i++) {
-            lcd.drawRect(dcport, rand()%320, rand()%240, rand()%100, rand()%100, rand()%65535);
+        lcd.clear(dc);
+        for(int i=0; i<200;i++) {
+            lcd.setColor(dc, rand() & 0xffffff);
+            lcd.drawFilledRect(dc, rand()%320, rand()%240, rand()%100, rand()%100);
         }
-        lcd.clear(dcport, 0);
-        for(i=0; i<1000;i++) {
-            lcd.drawCircle(dcport, rand()%320, rand()%240, rand()%100, rand()%65535);
+        lcd.clear(dc);
+        for(int i=0; i<500;i++) {
+            lcd.setColor(dc, rand() & 0xffffff);
+            lcd.drawCircle(dc, rand()%320, rand()%240, rand()%100);
         }
-        lcd.clear(dcport, 0);
-        for(i=0; i<200;i++) {
-            lcd.drawFilledCircle(dcport, rand()%320, rand()%240, rand()%60, rand()%65535);
+        lcd.clear(dc);
+        for(int i=0; i<120;i++) {
+            lcd.setColor(dc, rand() & 0xffffff);
+            lcd.drawFilledCircle(dc, rand()%320, rand()%240, rand()%60);
         }
     }
-
 }
-*/
+
 
 int main() {
     spi_master_if i_spi[1];
     par {
-        //graphics(i_spi[0]);
-        test(i_spi[0]);
-        spi_master(i_spi, 1,
-            p_sclk, p_mosi, p_miso , p_ss, 1, clk_spi);
+        demo(i_spi[0]);
+        spi_master(i_spi, 1, p_sclk, p_mosi, p_miso , p_ss, 1, clk_spi);
     }
     return 0;
 }

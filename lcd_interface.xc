@@ -180,8 +180,17 @@ extends client interface spi_master_if  : {
 
     void init(client spi_master_if self,
                 DisplayContext & dc,
-                out port * movable dc_port)
+                out port * movable dc_port,
+                out port reset)
     {
+        // Hardware reset
+        reset <: 1;
+        delay_microseconds(5000);
+        reset <: 0;
+        delay_microseconds(20000);
+        reset <: 1;
+        delay_microseconds(150000);
+
         dc.dc_port = move(dc_port);
         self.setColor(dc, 0x40ff40);
         self.setBackgroundColor(dc, 0x0);
@@ -274,6 +283,18 @@ extends client interface spi_master_if  : {
           if (e2 < dy) { err += dx; y0 += sy; }
         }
         self.end_transaction(SPI_DELAY);
+    }
+
+    void drawPolyLine(client spi_master_if self,
+                      DisplayContext & dc,
+                      Point points[],
+                      const int n)
+    {
+        for (int i=0; i < n-1; i++) {
+            Point p1 = points[i];
+            Point p2 = points[i+1];
+            self.drawLine(dc, p1.x, p1.y, p2.x, p2.y);
+        }
     }
 
     void drawHLine(client spi_master_if self,

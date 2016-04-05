@@ -19,11 +19,16 @@ typedef struct {
 
 } DisplayContext;
 
+typedef struct {
+    uint16_t x;
+    uint16_t y;
+} Point;
 
 extends client interface spi_master_if  : {
     void init(client spi_master_if self,
               DisplayContext & dc,
-              out port * movable dc_port);
+              out port * movable dc_port,
+              out port reset);
 
     void initRegisters(client spi_master_if self,
                        DisplayContext & dc);
@@ -51,6 +56,11 @@ extends client interface spi_master_if  : {
                    DisplayContext & dc,
                    int x1, int y1,
                    int x2, int y2);
+
+    void drawPolyLine(client spi_master_if self,
+                      DisplayContext & dc,
+                      Point points[],
+                      const int n);
 
     void drawFilledRect(client spi_master_if self,
                         DisplayContext & dc,
